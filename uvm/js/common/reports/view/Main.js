@@ -12,7 +12,9 @@ Ext.define('Ung.view.reports.Main', {
             context: null,
             fetching: false,
             selection: null,
-            editing: false
+            editing: false,
+            paramsMap: {},
+            condsQuery: ''
         }
     },
 
@@ -71,6 +73,11 @@ Ext.define('Ung.view.reports.Main', {
             selectionModel: {
                 type: 'treemodel',
                 pruneRemoved: false
+            },
+            getRowClass: function(node) {
+                if (node.get('disabled')) {
+                    return 'disabled';
+                }
             }
         },
 

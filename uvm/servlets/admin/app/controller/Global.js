@@ -70,10 +70,20 @@ Ext.define('Ung.controller.Global', {
             'config/:configName': { before: 'detectChanges', action: 'onConfig' },
             'config/:configName/:configView': 'onConfig',
             'config/:configName/:configView/:subView': 'onConfig',
-            'reports': { before: 'detectChanges', action: 'onReports' },
-            'reports/create': { before: 'detectChanges', action: 'onReports' },
-            'reports/:category': { before: 'detectChanges', action: 'onReports' },
-            'reports/:category/:entry': { before: 'detectChanges', action: 'onReports', conditions: { ':entry': '(.*)' } },
+            'reports': {
+                before: 'detectChanges',
+                action: 'onReports'
+            },
+            'reports:params': {
+                before: 'detectChanges',
+                action: 'onReports',
+                conditions: {
+                    ':params' : '([0-9a-zA-Z._\?\&=\-]+)'
+                }
+            },
+            // 'reports/create': { before: 'detectChanges', action: 'onReports' },
+            // 'reports/:category': { before: 'detectChanges', action: 'onReports' },
+            // 'reports/:category/:entry': { before: 'detectChanges', action: 'onReports', conditions: { ':entry': '(.*)' } },
             'sessions': { before: 'detectChanges', action: 'onSessions' },
             'sessions/:params': {
                 action: 'onSessions',
@@ -331,16 +341,45 @@ Ext.define('Ung.controller.Global', {
         }
     },
 
-    onReports: function (categoryName, reportName) {
+    onReports: function (query) {
         var reportsVm = this.getReportsView().getViewModel();
-        var hash = '';
-        if (categoryName) {
-            hash += categoryName;
+        var hash = '', paramsMap = {
+            route: {},
+            conditions: []
+        }, condsMap = [], condsQuery = '';
+        // paramsMap = query.split('&');
+
+        if (query) {
+            Ext.Array.each(query.replace('?', '').split('&'), function (param) {
+                var key = param.split('=')[0],
+                    val = param.split('=')[1];
+                if (key === 'cat' || key === 'rep') {
+                    paramsMap.route[key] = val;
+                } else {
+                    paramsMap.conditions.push({
+                        column: key,
+                        operator: '=',
+                        value: val,
+                        autoFormatValue: true,
+                        javaClass: 'com.untangle.app.reports.SqlCondition'
+                    });
+                    condsQuery += '&' + key + '=' + val
+                }
+
+            });
         }
-        if (reportName) {
-            hash += '/' + reportName;
+        if (paramsMap.cat) {
+            hash += paramsMap.cat;
+        }
+        if (paramsMap.rep) {
+            hash += '/' + paramsMap.rep;
         }
         reportsVm.set('hash', hash);
+        reportsVm.set('paramsMap', paramsMap);
+        // reportsVm.set('conds', condsMap);
+
+        reportsVm.set('globalConditions', paramsMap.conditions);
+        reportsVm.set('condsQuery', condsQuery);
         this.getMainView().getViewModel().set('activeItem', 'reports');
     },
 

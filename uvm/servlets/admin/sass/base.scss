@@ -213,7 +213,22 @@ cite {
     color: #333;
     //font-family: 'Source Sans Pro', sans-serif;
     //font-size: 13px;
+    &.disabled {
+        .x-tree-icon {
+            color: #CCC;
+        }
+        .x-tree-node-text {
+            color: #CCC;
+        }
+    }
 }
+
+.x-grid-item-over {
+    .disabled {
+        background-color: #FFF;
+    }
+}
+
 
 .x-grid-dirty-cell {
     color: blue;

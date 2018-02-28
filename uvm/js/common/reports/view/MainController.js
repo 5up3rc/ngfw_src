@@ -25,42 +25,94 @@ Ext.define('Ung.view.reports.MainController', {
         me.getView().setLoading(false);
 
         me.buildTablesStore();
-        vm.bind('{hash}', function (hash) {
-            if (!hash) { me.resetView(); return; }
+        // vm.bind('{hash}', function (hash) {
+        //     if (!hash) { me.resetView(); return; }
 
-            // on create new report reset and apply new entry
-            if (hash === 'create') {
-                me.getViewModel().set('selection', null);
-                me.resetView();
-                me.getView().down('entry').getController().reset();
-                me.getView().down('entry').getViewModel().set({
-                    entry: null,
-                    eEntry: Ext.create('Ung.model.Report')
-                });
-                me.lookup('cards').setActiveItem('report');
-                return;
+        //     // on create new report reset and apply new entry
+        //     if (hash === 'create') {
+        //         me.getViewModel().set('selection', null);
+        //         me.resetView();
+        //         me.getView().down('entry').getController().reset();
+        //         me.getView().down('entry').getViewModel().set({
+        //             entry: null,
+        //             eEntry: Ext.create('Ung.model.Report')
+        //         });
+        //         me.lookup('cards').setActiveItem('report');
+        //         return;
+        //     }
+
+        //     console.log(window.location.hash);
+
+        //     if (Ung.app.context === 'REPORTS') {
+        //         path = '/reports/' + window.location.hash.replace('#', '');
+        //         node = Ext.getStore('reportstree').findNode('url', window.location.hash.replace('#', ''));
+        //     } else {
+        //         path = window.location.hash.replace('#', '');
+        //         node = Ext.getStore('reportstree').findNode('url', window.location.hash.replace('#reports/', ''));
+        //     }
+
+        //     // selected node icon/text for category stats
+        //     vm.set('selection', { icon: node.get('icon'), text: node.get('text') });
+
+        //     // breadcrumb selection
+        //     me.lookup('breadcrumb').setSelection(node);
+
+        //     // tree selection
+        //     me.lookup('tree').collapseAll();
+        //     me.lookup('tree').selectPath(path, 'slug', '/', Ext.emptyFn, me);
+
+        //     me.showNode(node); // shows the selected report or category stats
+        // });
+        vm.bind('{conds}', function (conds) {
+            // console.log(conds);
+        });
+
+
+
+        vm.bind('{paramsMap}', function (params) {
+            vm.set('globalConditions', params.conditions);
+
+            var path = '/reports/';
+
+            if (params.route.cat) {
+                path += params.route.cat + '/'
             }
 
-            if (Ung.app.context === 'REPORTS') {
-                path = '/reports/' + window.location.hash.replace('#', '');
-                node = Ext.getStore('reportstree').findNode('url', window.location.hash.replace('#', ''));
-            } else {
-                path = window.location.hash.replace('#', '');
-                node = Ext.getStore('reportstree').findNode('url', window.location.hash.replace('#reports/', ''));
+            if (params.route.rep) {
+                path += params.route.rep
             }
 
-            // selected node icon/text for category stats
-            vm.set('selection', { icon: node.get('icon'), text: node.get('text') });
 
-            // breadcrumb selection
-            me.lookup('breadcrumb').setSelection(node);
-
-            // tree selection
+            // node = Ext.getStore('reportstree').findNode('url', 'cat=' + params.route.cat + '&rep=' + params.route.rep);
+            // vm.set('selection', { icon: node.get('icon'), text: node.get('text') })
             me.lookup('tree').collapseAll();
             me.lookup('tree').selectPath(path, 'slug', '/', Ext.emptyFn, me);
-
-            me.showNode(node); // shows the selected report or category stats
+            // me.showNode(node); // shows the selected report or category stats
         });
+
+        vm.bind('{condsQuery}', function (conditions) {
+
+            var node = Ext.getStore('reportstree').getRoot(), conds = [];
+
+
+            Ext.Array.each(vm.get('paramsMap.conditions'), function (c) {
+                conds.push(c.column);
+            });
+
+            node.cascade(function (n) {
+                if (n.isLeaf()) {
+                    // console.log(n.get('table'));
+                    if (conds.length > 0) {
+                        n.set('disabled', !TableConfig.containsColumns(n.get('table'), conds))
+                    } else {
+                        n.set('disabled', false);
+                    }
+                }
+            });
+        });
+
+
+
         vm.bind('{fetching}', function (val) {
             if (!val) { Ext.MessageBox.hide(); } // hide any loading message box
         });
@@ -77,6 +129,9 @@ Ext.define('Ung.view.reports.MainController', {
     // check if data is fetching and cancel selection if true
     beforeSelectReport: function (el, node) {
         var me = this, vm = me.getViewModel();
+        if (node.get('disabled')) {
+            return false;
+        }
         if (vm.get('fetching')) {
             Ext.MessageBox.wait('Data is fetching...'.t(), 'Please wait'.t(), { text: '' });
             return false;
@@ -84,13 +139,13 @@ Ext.define('Ung.view.reports.MainController', {
         if (Ung.app.context === 'REPORTS') {
             Ung.app.redirectTo('#' + node.get('url'));
         } else {
-            Ung.app.redirectTo('#reports/' + node.get('url'));
+            Ung.app.redirectTo('#reports?' + node.get('url') + vm.get('condsQuery'));
         }
+        me.showNode(node);
     },
 
     showNode: function (node) {
         var me = this, record;
-
         if (node.isLeaf()) {
             // report node
             record = Ext.getStore('reports').findRecord('url', node.get('url'), 0, false, true, true);

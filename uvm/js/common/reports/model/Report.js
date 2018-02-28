@@ -66,7 +66,11 @@ Ext.define ('Ung.model.Report', {
             name: 'url',
             calculate: function (entry) {
                 // return entry.category.replace(/ /g, '').toLowerCase() + '/' + entry.uniqueId;
-                return entry.category.replace(/ /g, '-').toLowerCase() + '/' + entry.slug;
+                return 'cat=' + entry.categorySlug + '&rep=' + entry.slug;
+                // return {
+                //     cat: entry.categorySlug,
+                //     rep: entry.slug
+                // }
             }
         },
         {

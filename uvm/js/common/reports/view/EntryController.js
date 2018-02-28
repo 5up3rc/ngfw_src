@@ -117,6 +117,36 @@ Ext.define('Ung.view.reports.EntryController', {
             }
         });
 
+        // vm.bind('{globalConditions}', function (conditions) {
+        //     console.log('##################');
+        //     console.log(me.globalConditions);
+        //     console.log(conditions);
+        //     console.log('##################');
+        //     if (!me.globalConditions || !Ext.Array.equals(me.globalConditions, conditions)) {
+        //         console.log('RELOAD');
+        //         me.globalConditions = conditions;
+        //         me.reload();
+        //     }
+        // });
+
+        vm.bind('{condsQuery}', function (conditions) {
+            if (!me.globalConditions || me.globalConditions != conditions) {
+                me.globalConditions = conditions;
+                me.reload();
+            }
+        });
+
+
+        // vm.bind('{paramsMap}', function (paramsMap) {
+        //     console.log('gc', me.globalConditions);
+        //     if (!me.globalConditions || !Ext.Array.equals(me.globalConditions, paramsMap.conditions)) {
+        //         me.globalConditions = paramsMap.conditions;
+        //         me.reload();
+        //     }
+
+        //     // me.reload(true);
+        // });
+
         // vm.bind('{f_startdate}', function () { me.reload(); });
         // vm.bind('{f_enddate}', function () { me.reload(); });
     },
