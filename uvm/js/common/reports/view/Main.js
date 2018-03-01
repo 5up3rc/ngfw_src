@@ -49,6 +49,79 @@ Ext.define('Ung.view.reports.Main', {
             wide: { hidden: true },
             tall: { hidden: false }
         }
+    }, {
+        xtype: 'toolbar',
+        itemId: 'globalcond',
+        docked: 'top',
+        ui: 'footer',
+        // height: 36,
+        style: {
+            background: '#e4e4e4'
+        },
+        items: [{
+            xtype: 'component',
+            html: '<strong>' + 'Global Conditions:'.t() + '</strong>'
+        }, {
+            xtype: 'container',
+            layout: 'hbox'
+        }, {
+            xtype: 'button',
+            // scale: 'medium',
+            text: 'Add'.t(),
+            iconCls: 'fa fa-plus-circle',
+            hidden: true,
+            bind: {
+                hidden: '{paramsMap.conditions.length >= 3}'
+            },
+            menu: {
+                plain: true,
+                showSeparator: false,
+                mouseLeaveDelay: 0,
+                items: [{
+                    xtype: 'radiogroup',
+                    simpleValue: true,
+                    reference: 'test',
+                    publishes: 'value',
+                    fieldLabel: '<strong>' + 'Choose column'.t() + '</strong>',
+                    labelAlign: 'top',
+                    columns: 1,
+                    vertical: true,
+                    items: [
+                        { boxLabel: 'Username'.t(), name: 'rb', inputValue: 'username', bind: { disabled: '{disablecConds.username}' } },
+                        { boxLabel: 'Protocol'.t(), name: 'rb', inputValue: 'protocol', bind: { disabled: '{disablecConds.protocol}' } },
+                        { boxLabel: 'Hostname'.t(), name: 'rb', inputValue: 'hostname', bind: { disabled: '{disablecConds.hostname}' } },
+                        { boxLabel: 'Client'.t(), name: 'rb', inputValue: 'c_client_addr', bind: { disabled: '{disablecConds.c_client_addr}' } },
+                        { boxLabel: 'Server'.t(), name: 'rb', inputValue: 's_server_addr', bind: { disabled: '{disablecConds.s_server_addr}' } },
+                        { boxLabel: 'Client Port', name: 'rb', inputValue: 'c_client_port', bind: { disabled: '{disablecConds.c_client_port}' } },
+                        { boxLabel: 'Server Port'.t(), name: 'rb', inputValue: 's_server_port', bind: { disabled: '{disablecConds.s_server_port}' } },
+                        { boxLabel: 'Policy Id'.t(), name: 'rb', inputValue: 'policy_id', bind: { disabled: '{disablecConds.policy_id}' } }
+                    ]
+                }, '-', {
+                    xtype: 'textfield',
+                    fieldLabel: '<strong>' + 'Set Value'.t() + '</strong>',
+                    labelAlign: 'top',
+                    margin: '5 5',
+                    enableKeyEvents: true,
+                    disabled: true,
+                    bind: {
+                        disabled: '{!test.value}'
+                    },
+                    listeners: {
+                        keyup: function (el, e) {
+                            if (e.keyCode === 13) {
+                                el.up('menu').hide();
+                            }
+                        }
+                    }
+                }, '-', {
+                    text: '<strong>' + 'More conditions ...'.t() + '</strong>',
+                    handler: 'onMoreConditions'
+                }],
+                listeners: {
+                    beforehide: 'onAddConditionHide'
+                }
+            }
+        }]
     }],
 
     items: [{
@@ -58,12 +131,14 @@ Ext.define('Ung.view.reports.Main', {
         region: 'west',
         split: true,
         border: false,
-
+        bodyBorder: false,
         // singleExpand: true,
         useArrows: true,
         rootVisible: false,
         plugins: 'responsive',
         store: 'reportstree',
+
+        singleExpand: true,
 
         bind: {
             width: '{editing ? 0 : 250}'
@@ -82,45 +157,46 @@ Ext.define('Ung.view.reports.Main', {
         },
 
         dockedItems: [{
-            xtype: 'textfield',
-            margin: '1',
-            emptyText: 'Filter reports ...',
-            enableKeyEvents: true,
-            flex: 1,
-            triggers: {
-                clear: {
-                    cls: 'x-form-clear-trigger',
-                    hidden: true,
-                    handler: 'onTreeFilterClear'
-                }
-            },
-            listeners: {
-                change: 'filterTree',
-                buffer: 100
-            }
-        }, {
             xtype: 'toolbar',
             dock: 'bottom',
             ui: 'footer',
-            hidden: true,
-            bind: {
-                hidden: '{context !== "ADMIN"}'
-            },
             items: [{
-                xtype: 'segmentedbutton',
-                allowToggle: false,
+                xtype: 'textfield',
+                emptyText: 'Filter reports ...',
+                enableKeyEvents: true,
                 flex: 1,
-                items: [{
-                    text: 'Create New'.t(),
-                    iconCls: 'fa fa-plus fa-lg',
-                    scale: 'medium',
-                    handler: 'newReport',
-                }, {
-                    text: 'Import'.t(),
-                    iconCls: 'fa fa-external-link-square fa-lg fa-rotate-180',
-                    scale: 'medium',
-                    handler: 'newImport',
-                }]
+                triggers: {
+                    clear: {
+                        cls: 'x-form-clear-trigger',
+                        hidden: true,
+                        handler: 'onTreeFilterClear'
+                    }
+                },
+                listeners: {
+                    change: 'filterTree',
+                    buffer: 100
+                }
+            }, {
+                xtype: 'button',
+                iconCls: 'fa fa-plus-circle',
+                text: 'Add/Import'.t(),
+                hidden: true,
+                bind: {
+                    hidden: '{context !== "ADMIN"}'
+                },
+                menu: {
+                    plain: true,
+                    mouseLeaveDelay: 0,
+                    items: [{
+                        text: 'Create New'.t(),
+                        iconCls: 'fa fa-plus fa-lg',
+                        handler: 'newReport', // not working yet
+                    }, {
+                        text: 'Import'.t(),
+                        iconCls: 'fa fa-download',
+                        handler: 'newImport'
+                    }]
+                }
             }]
         }],
 

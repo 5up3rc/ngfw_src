@@ -71,6 +71,61 @@ Ext.define('Ung.view.reports.MainController', {
 
         vm.bind('{paramsMap}', function (params) {
             vm.set('globalConditions', params.conditions);
+            var tb = me.getView().down('#globalcond > container'), disabledConds = {};
+
+            tb.removeAll();
+            Ext.Array.each(params.conditions, function (cond, idx) {
+                disabledConds[cond.column] = true;
+                tb.add({
+                    xtype: 'segmentedbutton',
+                    allowToggle: false,
+                    margin: '0 5',
+                    items: [{
+                        // text: TableConfig.getColumnHumanReadableName(cond.column) + ' [' + cond.column + '] = <strong>' + cond.value + '</strong>',
+                        text: TableConfig.getColumnHumanReadableName(cond.column) +  ' = <strong>' + cond.value + '</strong>',
+                        // scale: 'medium',
+                        menu: {
+                            plain: true,
+                            showSeparator: false,
+                            mouseLeaveDelay: 0,
+                            condition: cond,
+                            items: [{
+                                xtype: 'textfield',
+                                enableKeyEvents: true,
+                                margin: '3 0',
+                                value: cond.value,
+                                listeners: {
+                                    keyup: function (el, e) {
+                                        if (e.keyCode === 13) {
+                                            el.up('menu').hide();
+                                        }
+                                    }
+                                }
+                            }],
+                            listeners: {
+                                beforehide: function (el) {
+                                    el.condition.value = el.down('textfield').getValue();
+                                },
+                                hide: function () {
+                                    me.redirect();
+                                }
+                            }
+                        }
+                    }, {
+                        iconCls: 'fa fa-times',
+                        // scale: 'medium',
+                        condIndex: idx,
+                        handler: function (el) {
+                            Ext.Array.removeAt(params.conditions, el.condIndex);
+                            me.redirect();
+                        }
+                    }]
+                })
+            });
+
+            vm.set('disablecConds', disabledConds);
+
+
 
             var path = '/reports/';
 
@@ -85,7 +140,7 @@ Ext.define('Ung.view.reports.MainController', {
 
             // node = Ext.getStore('reportstree').findNode('url', 'cat=' + params.route.cat + '&rep=' + params.route.rep);
             // vm.set('selection', { icon: node.get('icon'), text: node.get('text') })
-            me.lookup('tree').collapseAll();
+            // me.lookup('tree').collapseAll();
             me.lookup('tree').selectPath(path, 'slug', '/', Ext.emptyFn, me);
             // me.showNode(node); // shows the selected report or category stats
         });
@@ -117,6 +172,197 @@ Ext.define('Ung.view.reports.MainController', {
             if (!val) { Ext.MessageBox.hide(); } // hide any loading message box
         });
     },
+
+    onAddConditionHide: function (menu) {
+        var me = this, vm = me.getViewModel();
+
+        var col = menu.down('radiogroup').getValue(), val = menu.down('textfield').getValue();
+
+        menu.down('radiogroup').reset();
+        menu.down('textfield').setValue('');
+
+        if (!col || !val) {
+            return;
+        }
+
+        var conds = vm.get('paramsMap.conditions');
+        conds.push({
+            column: col,
+            operator: '=',
+            value: val,
+            autoFormatValue: true,
+            javaClass: 'com.untangle.app.reports.SqlCondition'
+        });
+        me.redirect();
+    },
+
+    redirect: function () {
+        var me = this, vm = me.getViewModel();
+        var route = '#reports?';
+        var params = vm.get('paramsMap');
+
+        if (params.route.cat) {
+            route += 'cat=' + params.route.cat;
+        }
+
+        if (params.route.rep) {
+            route += '&rep=' + params.route.rep;
+        }
+
+        Ext.Array.each(params.conditions, function (cond) {
+            route += '&' + cond.column + '=' + cond.value
+        });
+
+        Ung.app.redirectTo(route);
+
+    },
+
+    onMoreConditions: function () {
+        var me = this, vm = me.getViewModel();
+        var tablesComboStore = [], columnsComboStore = [];
+
+        Ext.Object.each(TableConfig.tableConfig, function (table, val) {
+            tablesComboStore.push([table, table]);
+        });
+
+        Ext.Array.each(TableConfig.tableConfig['sessions'].columns, function (column) {
+            columnsComboStore.push([column.dataIndex, column.header + ' [' + column.dataIndex + ']']);
+        });
+
+        var dialog = me.getView().add({
+            xtype: 'window',
+            modal: true,
+            draggable: false,
+            resizable: false,
+            width: 800,
+            height: 400,
+            title: 'Global Conditions'.t(),
+            layout: 'fit',
+            items: [{
+                xtype: 'grid',
+                sortableColumns: false,
+                enableColumnHide: false,
+                forceFit: true,
+                dockedItems: [{
+                    xtype: 'toolbar',
+                    dock: 'top',
+                    ui: 'footer',
+                    items: [{
+                        xtype: 'combo',
+                        width: 250,
+                        fieldLabel: 'Select Table'.t(),
+                        labelAlign: 'top',
+                        queryMode: 'local',
+                        // valueField: 'value',
+                        // displayField: 'name',
+                        store: tablesComboStore,
+                        emptyText: 'Select Table'.t(),
+                        allowBlank: false,
+                        editable: false,
+                        value: 'sessions',
+                        listeners: {
+                            change: function (el, table) {
+                                var columns = TableConfig.tableConfig[table].columns, store = [];
+                                Ext.Array.each(columns, function (column) {
+                                    store.push([column.dataIndex, column.header + ' [' + column.dataIndex + ']']);
+                                });
+                                el.nextNode().setStore(store);
+                                el.nextNode().setValue(store[0]);
+                            }
+                        }
+                    }, {
+                        xtype: 'combo',
+                        fieldLabel: 'Select Column'.t(),
+                        emptyText: 'Select Column'.t(),
+                        flex: 1,
+                        labelAlign: 'top',
+                        queryMode: 'local',
+                        editable: false,
+                        allowBlank: false,
+                        store: columnsComboStore,
+                        value: columnsComboStore[0]
+                    }, {
+                        text: 'Add Column'.t(),
+                        scale: 'large',
+                        handler: function (el) {
+                            var tbar = el.up('toolbar'),
+                                col = tbar.down('combo').nextNode().getValue(),
+                                store = el.up('grid').getStore();
+
+                            if (store.find('column', col) >= 0) {
+                                Ext.Msg.alert('Info ...', 'Column <strong>' + col + '</strong> is already added!');
+                                return;
+                            }
+
+                            el.up('grid').getStore().add({
+                                column: col,
+                                value: '',
+                                operator: '=',
+                                autoFormatValue: true,
+                                javaClass: 'com.untangle.app.reports.SqlCondition'
+                            });
+                        }
+                    }]
+                }],
+                bind: {
+                    store: {
+                        data: '{paramsMap.conditions}'
+                    }
+                },
+                border: false,
+                columns: [{
+                    text: 'Column'.t(),
+                    dataIndex: 'column',
+                    flex: 1,
+                    renderer: function (val) {
+                        return TableConfig.getColumnHumanReadableName(val) +  ' [' + val + ']';
+                    }
+                }, {
+                    xtype: 'widgetcolumn',
+                    text: 'Value'.t(),
+                    width: 200,
+                    dataIndex: 'value',
+                    widget: {
+                        xtype: 'textfield',
+                        bind: '{record.value}'
+                    }
+                }, {
+                    xtype: 'actioncolumn',
+                    width: 40,
+                    align: 'center',
+                    resizable: false,
+                    tdCls: 'action-cell',
+                    iconCls: 'fa fa-trash-o',
+                    menuDisabled: true,
+                    hideable: false,
+                    handler: function (view, rowIndex, colIndex, item, e, record) {
+                        record.drop();
+                    }
+                }]
+            }],
+            buttons: [{
+                text: 'Cancel'.t(),
+                iconCls: 'fa fa-ban',
+                handler: function (el) {
+                    el.up('window').hide();
+                }
+            }, {
+                text: 'Apply'.t(),
+                iconCls: 'fa fa-check',
+                handler: function (el) {
+                    var win = el.up('window'), store = win.down('grid').getStore();
+                    vm.set('paramsMap.conditions', Ext.Array.pluck(store.getRange(), 'data'));
+                    win.hide();
+                    me.redirect();
+                }
+            }]
+        });
+
+        dialog.show();
+    },
+
+
+
 
     buildTablesStore: function () {
         if (!rpc.reportsManager) { return; }
