@@ -13,7 +13,7 @@ Ext.define('Ung.view.reports.Main', {
             fetching: false,
             selection: null,
             editing: false,
-            paramsMap: {},
+            paramsMap: null,
             condsQuery: ''
         }
     },
@@ -77,12 +77,60 @@ Ext.define('Ung.view.reports.Main', {
                 plain: true,
                 showSeparator: false,
                 mouseLeaveDelay: 0,
+                // items: [{
+                //     xtype: 'container',
+                //     layout: 'hbox',
+                //     // padding: 10,
+                //     defaults: {
+                //         labelAlign: 'top',
+                //         margin: 5,
+                //     },
+                //     items: [{
+                //         xtype: 'combo',
+                //         width: 90,
+                //         fieldLabel: 'Column'.t(),
+                //         editable: false,
+                //         queryMode: 'local',
+                //         store: [
+                //             ['username', 'Username'],
+                //             ['protocol', 'Protocol'],
+                //             ['hostname', 'Hostname'],
+                //             ['c_client_addr', 'Client'],
+                //             ['s_server_addr', 'Server'],
+                //             ['c_client_port', 'Client Port'],
+                //             ['s_server_port', 'Server Port'],
+                //             ['policy_id', 'Policy Id']
+                //         ]
+                //     }, {
+                //         xtype: 'combo',
+                //         fieldLabel: 'Operator'.t(),
+                //         editable: false,
+                //         queryMode: 'local',
+                //         valueField: 'value',
+                //         displayField: 'text',
+                //         store: { data: [
+                //             { text: 'equals (=)', value: '=' },
+                //             { text: 'not equals (!=)', value: '!=' },
+                //             { text: 'greater than (>)', value: '>' },
+                //             { text: 'less than (<)', value: '<' },
+                //             { text: 'greater or equal (>=)', value: '>=' },
+                //             { text: 'less or equal (<=)', value: '<=' },
+                //             { text: 'like', value: 'like' },
+                //             { text: 'not like', value: 'not like' },
+                //             { text: 'is', value: 'is' },
+                //             { text: 'is not', value: 'is not' },
+                //             { text: 'in', value: 'in' },
+                //             { text: 'not in', value: 'not in' }
+                //         ]}
+                //     }]
+                // }]
                 items: [{
                     xtype: 'radiogroup',
+                    itemId: 'add_column',
                     simpleValue: true,
-                    reference: 'test',
+                    reference: 'rg',
                     publishes: 'value',
-                    fieldLabel: '<strong>' + 'Choose column'.t() + '</strong>',
+                    fieldLabel: '<strong>' + 'Choose Column'.t() + '</strong>',
                     labelAlign: 'top',
                     columns: 1,
                     vertical: true,
@@ -97,14 +145,41 @@ Ext.define('Ung.view.reports.Main', {
                         { boxLabel: 'Policy Id'.t(), name: 'rb', inputValue: 'policy_id', bind: { disabled: '{disablecConds.policy_id}' } }
                     ]
                 }, '-', {
+                    xtype: 'combo',
+                    itemId: 'add_operator',
+                    fieldLabel: '<strong>' + 'Operator'.t() + '</strong>',
+                    labelAlign: 'top',
+                    editable: false,
+                    queryMode: 'local',
+                    disabled: true,
+                    bind: {
+                        disabled: '{!rg.value}'
+                    },
+                    value: '=',
+                    store: [
+                        ['=', 'equals [=]'.t()],
+                        ['!=', 'not equals [!=]'.t()],
+                        ['>', 'greater than [>]'.t()],
+                        ['<', 'less than [<]'.t()],
+                        ['>=', 'greater or equal [>=]'.t()],
+                        ['<=', 'less or equal [<=]'.t()],
+                        ['like', 'like'.t()],
+                        ['not like', 'not like'.t()],
+                        ['is', 'is'.t()],
+                        ['is not', 'is not'.t()],
+                        ['in', 'in'.t()],
+                        ['not in', 'not in'.t()]
+                    ]
+                }, '-', {
                     xtype: 'textfield',
-                    fieldLabel: '<strong>' + 'Set Value'.t() + '</strong>',
+                    itemId: 'add_value',
+                    fieldLabel: '<strong>' + 'Value'.t() + '</strong>',
                     labelAlign: 'top',
                     margin: '5 5',
                     enableKeyEvents: true,
                     disabled: true,
                     bind: {
-                        disabled: '{!test.value}'
+                        disabled: '{!rg.value}'
                     },
                     listeners: {
                         keyup: function (el, e) {

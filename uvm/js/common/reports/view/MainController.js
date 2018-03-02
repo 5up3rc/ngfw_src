@@ -70,6 +70,11 @@ Ext.define('Ung.view.reports.MainController', {
 
 
         vm.bind('{paramsMap}', function (params) {
+
+            if (!params) {
+                return;
+            };
+
             vm.set('globalConditions', params.conditions);
             var tb = me.getView().down('#globalcond > container'), disabledConds = {};
 
@@ -81,9 +86,7 @@ Ext.define('Ung.view.reports.MainController', {
                     allowToggle: false,
                     margin: '0 5',
                     items: [{
-                        // text: TableConfig.getColumnHumanReadableName(cond.column) + ' [' + cond.column + '] = <strong>' + cond.value + '</strong>',
-                        text: TableConfig.getColumnHumanReadableName(cond.column) +  ' = <strong>' + cond.value + '</strong>',
-                        // scale: 'medium',
+                        text: TableConfig.getColumnHumanReadableName(cond.column) + ' <span style="font-weight: bold; margin: 0 3px;">' + cond.operator + '</span> ' + cond.value,
                         menu: {
                             plain: true,
                             showSeparator: false,
@@ -92,7 +95,7 @@ Ext.define('Ung.view.reports.MainController', {
                             items: [{
                                 xtype: 'textfield',
                                 enableKeyEvents: true,
-                                margin: '3 0',
+                                margin: 5,
                                 value: cond.value,
                                 listeners: {
                                     keyup: function (el, e) {
@@ -101,7 +104,44 @@ Ext.define('Ung.view.reports.MainController', {
                                         }
                                     }
                                 }
-                            }],
+                            }, '-', {
+                                xtype: 'radiogroup',
+                                simpleValue: true,
+                                publishes: 'value',
+                                // fieldLabel: '<strong>' + 'Operator'.t() + '</strong>',
+                                // labelAlign: 'top',
+                                columns: 1,
+                                vertical: true,
+                                value: cond.operator,
+                                items: [
+                                    { boxLabel: 'equals [=]'.t(), name: 'rb', inputValue: '=' },
+                                    { boxLabel: 'not equals [!=]'.t(), name: 'rb', inputValue: '!=' },
+                                    { boxLabel: 'greater than [>]'.t(), name: 'rb', inputValue: '>' },
+                                    { boxLabel: 'less than [<]'.t(), name: 'rb', inputValue: '<' },
+                                    { boxLabel: 'greater or equal [>=]'.t(), name: 'rb', inputValue: '>=' },
+                                    { boxLabel: 'less or equal [<=]', name: 'rb', inputValue: '<=' },
+                                    { boxLabel: 'like'.t(), name: 'rb', inputValue: 'like' },
+                                    { boxLabel: 'not like'.t(), name: 'rb', inputValue: 'not like' },
+                                    { boxLabel: 'is'.t(), name: 'rb', inputValue: 'is' },
+                                    { boxLabel: 'is not'.t(), name: 'rb', inputValue: 'is not' },
+                                    { boxLabel: 'in'.t(), name: 'rb', inputValue: 'in' },
+                                    { boxLabel: 'not in'.t(), name: 'rb', inputValue: 'not in' }
+                                ],
+                                listeners: {
+                                    change: function (rg, val) {
+                                        cond.operator = val;
+                                        // rg.setValue()
+                                        me.redirect();
+                                    }
+                                }
+                            }
+                            // , '-', {
+                            //     xtype: 'checkbox',
+                            //     margin: 5,
+                            //     boxLabel: 'Auto Format Value'.t(),
+                            //     value: cond.autoFormatValue
+                            // }
+                            ],
                             listeners: {
                                 beforehide: function (el) {
                                     el.condition.value = el.down('textfield').getValue();
@@ -176,19 +216,23 @@ Ext.define('Ung.view.reports.MainController', {
     onAddConditionHide: function (menu) {
         var me = this, vm = me.getViewModel();
 
-        var col = menu.down('radiogroup').getValue(), val = menu.down('textfield').getValue();
+        var col = menu.down('#add_column').getValue(),
+            op = menu.down('#add_operator').getValue(),
+            val = menu.down('#add_value').getValue();
 
-        menu.down('radiogroup').reset();
-        menu.down('textfield').setValue('');
+        menu.down('#add_column').reset();
+        menu.down('#add_operator').setValue('=');
+        menu.down('#add_value').setValue('');
 
-        if (!col || !val) {
+
+        if (!col || !op || !val) {
             return;
         }
 
         var conds = vm.get('paramsMap.conditions');
         conds.push({
             column: col,
-            operator: '=',
+            operator: op,
             value: val,
             autoFormatValue: true,
             javaClass: 'com.untangle.app.reports.SqlCondition'
@@ -210,7 +254,7 @@ Ext.define('Ung.view.reports.MainController', {
         }
 
         Ext.Array.each(params.conditions, function (cond) {
-            route += '&' + cond.column + '=' + cond.value
+            route += '&' + cond.column + ( cond.operator === '=' ? '=' : encodeURIComponent('.' + cond.operator + '.') ) + cond.value
         });
 
         Ung.app.redirectTo(route);
@@ -242,7 +286,7 @@ Ext.define('Ung.view.reports.MainController', {
                 xtype: 'grid',
                 sortableColumns: false,
                 enableColumnHide: false,
-                forceFit: true,
+                // forceFit: true,
                 dockedItems: [{
                     xtype: 'toolbar',
                     dock: 'top',
@@ -316,6 +360,31 @@ Ext.define('Ung.view.reports.MainController', {
                     flex: 1,
                     renderer: function (val) {
                         return TableConfig.getColumnHumanReadableName(val) +  ' [' + val + ']';
+                    }
+                }, {
+                    xtype: 'widgetcolumn',
+                    text: 'Operator'.t(),
+                    width: 200,
+                    dataIndex: 'operator',
+                    widget: {
+                        xtype: 'combo',
+                        editable: false,
+                        queryMode: 'local',
+                        bind: '{record.operator}',
+                        store: [
+                            ['=', 'equals [=]'.t()],
+                            ['!=', 'not equals [!=]'.t()],
+                            ['>', 'greater than [>]'.t()],
+                            ['<', 'less than [<]'.t()],
+                            ['>=', 'greater or equal [>=]'.t()],
+                            ['<=', 'less or equal [<=]'.t()],
+                            ['like', 'like'.t()],
+                            ['not like', 'not like'.t()],
+                            ['is', 'is'.t()],
+                            ['is not', 'is not'.t()],
+                            ['in', 'in'.t()],
+                            ['not in', 'not in'.t()]
+                        ]
                     }
                 }, {
                     xtype: 'widgetcolumn',

@@ -78,7 +78,7 @@ Ext.define('Ung.controller.Global', {
                 before: 'detectChanges',
                 action: 'onReports',
                 conditions: {
-                    ':params' : '([0-9a-zA-Z._\?\&=\-]+)'
+                    ':params' : '([0-9a-zA-Z._%!\?\&=\-]+)'
                 }
             },
             // 'reports/create': { before: 'detectChanges', action: 'onReports' },
@@ -346,26 +346,37 @@ Ext.define('Ung.controller.Global', {
         var hash = '', paramsMap = {
             route: {},
             conditions: []
-        }, condsMap = [], condsQuery = '';
+        }, condsMap = [], condsQuery = '', decoded, parts, key, sep, val;
         // paramsMap = query.split('&');
 
         if (query) {
-            Ext.Array.each(query.replace('?', '').split('&'), function (param) {
-                var key = param.split('=')[0],
-                    val = param.split('=')[1];
+            Ext.Array.each(query.replace('?', '').split('&'), function (cond) {
+                decoded = decodeURIComponent(cond);
+
+                if (decoded.indexOf('.') >= 0) {
+                    parts = decoded.split('.');
+                    key = parts[0];
+                    sep = parts[1];
+                    val = parts[2];
+                } else {
+                    parts = decoded.split('=');
+                    key = parts[0];
+                    sep = '=';
+                    val = parts[1];
+                }
+
                 if (key === 'cat' || key === 'rep') {
                     paramsMap.route[key] = val;
                 } else {
                     paramsMap.conditions.push({
                         column: key,
-                        operator: '=',
+                        operator: sep,
                         value: val,
                         autoFormatValue: true,
                         javaClass: 'com.untangle.app.reports.SqlCondition'
                     });
-                    condsQuery += '&' + key + '=' + val
+                    condsQuery += '&' + key + ( sep === '=' ? '=' : encodeURIComponent('.' + sep + '.') ) + val
                 }
-
             });
         }
         if (paramsMap.cat) {
