@@ -240,6 +240,32 @@ Ext.define('Ung.view.reports.MainController', {
         me.redirect();
     },
 
+    conditionFromData: function (col, val, action) {
+        var me = this, vm = me.getViewModel();
+        var conds = vm.get('paramsMap.conditions');
+
+        if (action === 'replace') {
+            cond = Ext.Array.findBy(conds, function (c) {
+                return c.column === col;
+            });
+            if (cond) {
+                cond.value = val;
+                cond.operator = '=';
+            }
+        } else {
+            conds.push({
+                column: col,
+                operator: '=',
+                value: val,
+                autoFormatValue: true,
+                javaClass: 'com.untangle.app.reports.SqlCondition'
+            });
+        }
+
+        me.redirect();
+    },
+
+
     redirect: function () {
         var me = this, vm = me.getViewModel();
         var route = '#reports?';
@@ -254,7 +280,7 @@ Ext.define('Ung.view.reports.MainController', {
         }
 
         Ext.Array.each(params.conditions, function (cond) {
-            route += '&' + cond.column + ( cond.operator === '=' ? '=' : encodeURIComponent('.' + cond.operator + '.') ) + cond.value
+            route += '&' + cond.column + ( cond.operator === '=' ? '=' : encodeURIComponent('\'' + cond.operator + '\'') ) + cond.value
         });
 
         Ung.app.redirectTo(route);

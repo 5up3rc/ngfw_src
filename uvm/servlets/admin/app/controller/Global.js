@@ -78,7 +78,7 @@ Ext.define('Ung.controller.Global', {
                 before: 'detectChanges',
                 action: 'onReports',
                 conditions: {
-                    ':params' : '([0-9a-zA-Z._%!\?\&=\-]+)'
+                    ':params' : '([0-9a-zA-Z._%!\'\?\&=\-]+)'
                 }
             },
             // 'reports/create': { before: 'detectChanges', action: 'onReports' },
@@ -353,8 +353,8 @@ Ext.define('Ung.controller.Global', {
             Ext.Array.each(query.replace('?', '').split('&'), function (cond) {
                 decoded = decodeURIComponent(cond);
 
-                if (decoded.indexOf('.') >= 0) {
-                    parts = decoded.split('.');
+                if (decoded.indexOf('\'') >= 0) {
+                    parts = decoded.split('\'');
                     key = parts[0];
                     sep = parts[1];
                     val = parts[2];
@@ -375,7 +375,7 @@ Ext.define('Ung.controller.Global', {
                         autoFormatValue: true,
                         javaClass: 'com.untangle.app.reports.SqlCondition'
                     });
-                    condsQuery += '&' + key + ( sep === '=' ? '=' : encodeURIComponent('.' + sep + '.') ) + val
+                    condsQuery += '&' + key + ( sep === '=' ? '=' : encodeURIComponent('\'' + sep + '\'') ) + val
                 }
             });
         }

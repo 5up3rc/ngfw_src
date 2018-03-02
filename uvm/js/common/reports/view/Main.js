@@ -77,53 +77,6 @@ Ext.define('Ung.view.reports.Main', {
                 plain: true,
                 showSeparator: false,
                 mouseLeaveDelay: 0,
-                // items: [{
-                //     xtype: 'container',
-                //     layout: 'hbox',
-                //     // padding: 10,
-                //     defaults: {
-                //         labelAlign: 'top',
-                //         margin: 5,
-                //     },
-                //     items: [{
-                //         xtype: 'combo',
-                //         width: 90,
-                //         fieldLabel: 'Column'.t(),
-                //         editable: false,
-                //         queryMode: 'local',
-                //         store: [
-                //             ['username', 'Username'],
-                //             ['protocol', 'Protocol'],
-                //             ['hostname', 'Hostname'],
-                //             ['c_client_addr', 'Client'],
-                //             ['s_server_addr', 'Server'],
-                //             ['c_client_port', 'Client Port'],
-                //             ['s_server_port', 'Server Port'],
-                //             ['policy_id', 'Policy Id']
-                //         ]
-                //     }, {
-                //         xtype: 'combo',
-                //         fieldLabel: 'Operator'.t(),
-                //         editable: false,
-                //         queryMode: 'local',
-                //         valueField: 'value',
-                //         displayField: 'text',
-                //         store: { data: [
-                //             { text: 'equals (=)', value: '=' },
-                //             { text: 'not equals (!=)', value: '!=' },
-                //             { text: 'greater than (>)', value: '>' },
-                //             { text: 'less than (<)', value: '<' },
-                //             { text: 'greater or equal (>=)', value: '>=' },
-                //             { text: 'less or equal (<=)', value: '<=' },
-                //             { text: 'like', value: 'like' },
-                //             { text: 'not like', value: 'not like' },
-                //             { text: 'is', value: 'is' },
-                //             { text: 'is not', value: 'is not' },
-                //             { text: 'in', value: 'in' },
-                //             { text: 'not in', value: 'not in' }
-                //         ]}
-                //     }]
-                // }]
                 items: [{
                     xtype: 'radiogroup',
                     itemId: 'add_column',
